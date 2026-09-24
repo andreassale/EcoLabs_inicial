@@ -5,3 +5,12 @@ Agregá un tip vecinal corto sobre cómo prepararlo.
 Formato de respuesta: 
 **Categoría:** [Tu clasificación]
 **Tip vecinal:** [Tu tip]
+
+Prompt trivia
+Generá el nombre de un residuo doméstico dudoso o engañoso (ejemplo: 'Tubo de papas fritas', 'Ticket de supermercado').
+        Clasificalo estrictamente como: Reciclable, Compostable o Basura.
+        Agregá una justificación muy breve de por qué va ahí.
+        Respondé ÚNICAMENTE en este formato exacto:
+        Residuo: [nombre]
+        Categoria: [categoria]
+        Explicacion: [justificación]
