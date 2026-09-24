@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import google.generativeai as genai
 
+import streamlit.components.v1 as components
+
 # CONFIGURACIÓN DE LA PÁGINA
 st.set_page_config(page_title="Separá Bien Rosario", page_icon="♻️")
 
@@ -15,14 +17,15 @@ st.title("♻️ Separá Bien Rosario")
 st.write("Bienvenido a tu asistente barrial de residuos. Escribí qué tenés en la mano y te decimos a dónde va.")
 
 # SECCIÓN 1: EL CLASIFICADOR
-st.subheader("1. ¿Qué querés tirar?")
+st.subheader("¿Qué querés tirar?")
 residuo = st.text_input("Ejemplo: Caja de pizza, botella de plástico, yerba...")
 
 if st.button("Consultar IA"):
     if residuo:
         with st.spinner(f"🔍 Evaluando: {residuo}..."):
-            # AQUÍ ES DONDE EL GRUPO TRABAJA EN EL TALLER
-            # TODO: Que los vecinos debatan el comportamiento, tono y reglas del prompt.
+            # PARA TRABAJAR EN EL TALLER
+            # TODO: Debatir el comportamiento, tono y reglas del prompt.
+            
             prompt_taller = f"""
             Sos un asistente ambiental vecinal de Rosario. 
             El usuario quiere descartar este residuo: {residuo}.
@@ -45,7 +48,7 @@ if st.button("Consultar IA"):
 st.divider()
 
 # SECCIÓN 2: EL MAPA DE PUNTOS VERDES
-st.subheader("2. Puntos de recepción cercanos")
+st.subheader("Puntos de recepción cercanos")
 st.write("Encontrá tu punto de reciclaje o compostaje más cercano en la ciudad.")
 
 @st.cache_data
@@ -86,3 +89,71 @@ df_puntos = df_puntos[
 
 # 5. Dibujamos el mapa
 st.map(df_puntos, color="#00ff00")
+
+#--------------------------------------------------------------------------------------------------------------------
+
+st.divider()
+
+# TRIVIA (Desafío)
+
+st.subheader("Trivia: ¡Ponete a prueba!")
+st.write("Dejá que la IA te haga una pregunta y elegí el tacho correcto.")
+
+# 1. Memoria de la sesión
+if 'residuo_trivia' not in st.session_state:
+    st.session_state.residuo_trivia = None
+    st.session_state.categoria_correcta = None
+    st.session_state.explicacion = None
+
+# 2. Generación del desafío (Aquí impacta el trabajo del grupo)
+if st.button("Generar nuevo residuo sorpresa"):
+    with st.spinner("La IA está pensando un residuo engañoso..."):
+        # TODO: EL GRUPO REDACTA Y MEJORA ESTE TEXTO EN EL TALLER
+        prompt_trivia = """
+        Generá el nombre de un residuo doméstico dudoso o engañoso (ejemplo: 'Tubo de papas fritas', 'Ticket de supermercado').
+        Clasificalo estrictamente como: Reciclable, Compostable o Basura.
+        Agregá una justificación muy breve de por qué va ahí.
+        Respondé ÚNICAMENTE en este formato exacto:
+        Residuo: [nombre]
+        Categoria: [categoria]
+        Explicacion: [justificación]
+        """
+        try:
+            respuesta = modelo.generate_content(prompt_trivia)
+            lineas = respuesta.text.strip().split('\n')
+            
+            st.session_state.residuo_trivia = lineas[0].replace("Residuo: ", "").strip()
+            st.session_state.categoria_correcta = lineas[1].replace("Categoria: ", "").strip()
+            st.session_state.explicacion = lineas[2].replace("Explicacion: ", "").strip()
+        except Exception as e:
+            st.error("Hubo un error de conexión al generar la trivia. Intentá de nuevo.")
+
+# 3. Interfaz de botones y validación interactiva
+if st.session_state.residuo_trivia:
+    st.markdown(f"### ¿Dónde tiramos: **{st.session_state.residuo_trivia}**?")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    # Función para validar sin repetir código
+    def verificar_respuesta(categoria_elegida, mensaje_exito):
+        if st.session_state.categoria_correcta.lower() == categoria_elegida:
+            st.success(f"¡Correcto! {mensaje_exito} \n\n**Aprendizaje:** {st.session_state.explicacion}")
+        else:
+            st.error(f"¡Incorrecto! Era {st.session_state.categoria_correcta}. \n\n**Por qué:** {st.session_state.explicacion}")
+
+    with col1:
+        if st.button("♻️ Reciclable", use_container_width=True):
+            verificar_respuesta("reciclable", "Va al tacho naranja.")
+            
+    with col2:
+        if st.button("🌱 Compostable", use_container_width=True):
+            verificar_respuesta("compostable", "Va al compost.")
+            
+    with col3:
+        if st.button("🗑️ Basura", use_container_width=True):
+            verificar_respuesta("basura", "Va al tacho negro.")
+            
+    st.write("")
+    if st.button("Reiniciar juego", type="primary"):
+        st.session_state.residuo_trivia = None
+        st.rerun()
